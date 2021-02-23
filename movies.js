@@ -28,8 +28,13 @@ firebase.auth().onAuthStateChanged(async function(user) {
       document.querySelector(`.movie-${movie.id}`).addEventListener('click', async function(event) {
         event.preventDefault()
         let movieElement = document.querySelector(`.movie-${movie.id}`)
-        movieElement.classList.add('opacity-20')
-        await db.collection('watched').doc(`${movie.id}`).set({})
+        if (movieElement.classList.contains('opacity-20')) {
+          await db.collection('watched').doc(`${movie.id}`).delete()
+          movieElement.classList.remove('opacity-20')
+        } else {
+          await db.collection('watched').doc(`${movie.id}`).set({})
+          movieElement.classList.add('opacity-20')
+        }
       })
     }
 
