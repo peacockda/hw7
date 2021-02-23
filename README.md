@@ -9,5 +9,6 @@ In addition to the required rubric, the following features are included for usab
 - Movie posters and watched buttons are hidden until all are loaded
 - The page shows a loading message with progress cues until all database pulls are complete
 - The user can click a watched movie to set it to unwatched.
+- Other minor UI enhancements
 
 The page uses [Tailwind CSS](https://tailwindcss.com/) for styling and [Firebase](https://firebase.google.com/) for authentication and data storage.
