@@ -2,16 +2,54 @@ let db = firebase.firestore()
 
 firebase.auth().onAuthStateChanged(async function(user) {
   if (user) {
-    console.log('Signed in')
+    // Add the user to user database if they don't already exist
+    // console.log(`Signed in as ${user.displayName}`)
+    // console.log(user.uid)
+    db.collection('users').doc(user.uid).set({
+      name: user.displayName,
+      email: user.email
+    })
+
     let apiKey = '624b46c7d7c5ca830efc8c74b1303c74'
     let response = await fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=${apiKey}&language=en-US`)
     let json = await response.json()
     let movies = json.results
     // console.log(movies)
-    
+
+    // Sign out button and event
+    document.querySelector('.sign-in-or-sign-out').innerHTML = `
+      <button class="sign-out firebaseui-id-submit firebaseui-button mdl-button mdl-js-button mdl-button--raised mdl-button--colored">Sign Out</button>
+    `
+    document.querySelector('.sign-out').addEventListener('click', function(event) {
+      // console.log('Sign out button clicked')
+      firebase.auth().signOut()
+      document.location.reload()
+    })
+
+    // Hide the movies div until the for loop is complete
+    document.querySelector('.movies').classList.add('invisible')
+    document.querySelector('.loading').innerHTML = 'Loading'
+    let loadedOneFourth = false
+    let loadedTwoFourths = false
+    let loadedThreeFourths = false
+
+
     for (let i=0; i<movies.length; i++) {
+      
+      // Add to the loading element 
+      if ((i > (movies.length / 4)) && loadedOneFourth == false) {
+        document.querySelector('.loading').insertAdjacentHTML('beforeend', '.')
+        loadedOneFourth = true
+      } else if ((i > ((2*movies.length) / 4)) && loadedTwoFourths == false) {
+        document.querySelector('.loading').insertAdjacentHTML('beforeend', '.')
+        loadedTwoFourths = true
+      } else if ((i > ((3*movies.length) / 4)) && loadedThreeFourths == false) {
+        document.querySelector('.loading').insertAdjacentHTML('beforeend', '.')
+        loadedThreeFourths = true
+      }
+
       let movie = movies[i]
-      let docRef = await db.collection('watched').doc(`${movie.id}`).get()
+      let docRef = await db.collection('watched').doc(`${user.uid}-${movie.id}`).get()
       let watchedMovie = docRef.data()
       let opacityClass = ''
       if (watchedMovie) {
@@ -29,28 +67,20 @@ firebase.auth().onAuthStateChanged(async function(user) {
         event.preventDefault()
         let movieElement = document.querySelector(`.movie-${movie.id}`)
         if (movieElement.classList.contains('opacity-20')) {
-          await db.collection('watched').doc(`${movie.id}`).delete()
+          await db.collection('watched').doc(`${user.uid}-${movie.id}`).delete()
           movieElement.classList.remove('opacity-20')
         } else {
-          await db.collection('watched').doc(`${movie.id}`).set({})
+          await db.collection('watched').doc(`${user.uid}-${movie.id}`).set({})
           movieElement.classList.add('opacity-20')
         }
       })
+
     }
-
-    // Sign out button and event
-    document.querySelector('.movies').insertAdjacentHTML('beforeend', `
-      <button class="text-pink-500 underline sign-out">Sign Out</button>
-    `)
-    document.querySelector('.sign-out').addEventListener('click', function(event) {
-      console.log('Sign out button clicked')
-      firebase.auth().signOut()
-      document.location.reload()
-    })
-
+    // Un-hide movies element
+    document.querySelector('.loading').innerHTML = ''
+    document.querySelector('.movies').classList.remove('invisible')
   } else {
-      console.log('Not signed in')
-      document.querySelector('.movies').innerHTML = ''
+      // console.log('Not signed in')
       let ui = new firebaseui.auth.AuthUI(firebase.auth())
       let authUIConfig = {
         signInOptions: [
@@ -70,7 +100,7 @@ firebase.auth().onAuthStateChanged(async function(user) {
 // Step 1: Add your Firebase configuration to movies.html, along with the
 //         (provided) script tags for all necessary Firebase services – i.e. Firebase
 //         Auth, Firebase Cloud Firestore, and Firebase UI for Auth; also
-//         add the CSS file for FirebaseUI for Auth.
+//         add the CSS file for FirebaseUI for Auth. ✅
 // Step 2: Change the main event listener from DOMContentLoaded to 
 //         firebase.auth().onAuthStateChanged and include conditional logic 
 //         shows a login UI when signed, and the list of movies when signed
@@ -78,7 +108,7 @@ firebase.auth().onAuthStateChanged(async function(user) {
 //         login UI. If a user is signed-in, display a message like "Signed 
 //         in as <name>" along with a link to "Sign out". Ensure that a document
 //         is set in the "users" collection for each user that signs in to 
-//         your application.
+//         your application. ✅
 // Step 3: Setting the TMDB movie ID as the document ID on your "watched" collection
 //         will no longer work. The document ID should now be a combination of the
 //         TMDB movie ID and the user ID indicating which user has watched. 
