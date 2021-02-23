@@ -8,12 +8,7 @@ firebase.auth().onAuthStateChanged(async function(user) {
       email: user.email
     })
 
-    let apiKey = '624b46c7d7c5ca830efc8c74b1303c74'
-    let response = await fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=${apiKey}&language=en-US`)
-    let json = await response.json()
-    let movies = json.results
-
-    // Sign out button and event
+    // Sign out button
     document.querySelector('.sign-in-or-sign-out').innerHTML = `
       <div class="text-lg font-sans text-center text-white block">
         Signed in as ${user.displayName}.
@@ -22,22 +17,33 @@ firebase.auth().onAuthStateChanged(async function(user) {
         Sign Out
       </button>
     `
+    let moviesElement = document.querySelector('.movies')
+    // Sign out event
     document.querySelector('.sign-out').addEventListener('click', function(event) {
       event.preventDefault()
-      document.querySelector('.movies').innerHTML = ''
+      moviesElement.innerHTML = ''
       firebase.auth().signOut()
       document.location.reload()
     })
-
+  
     // Hide the movies div until the main loop is complete
-    document.querySelector('.movies').classList.add('invisible')
-    document.querySelector('.loading').innerHTML = 'Loading'
+    moviesElement.classList.add('invisible')
+    let loadingElement = document.querySelector('.loading')
+    loadingElement.innerHTML = 'Loading'
+    // We'll use these to show loading progress later
     let loadedOneFourth = false
     let loadedTwoFourths = false
     let loadedThreeFourths = false
 
+    // TMDb setup and data pull
+    let apiKey = '624b46c7d7c5ca830efc8c74b1303c74'
+    let response = await fetch(`https://api.themoviedb.org/3/movie/now_playing?api_key=${apiKey}&language=en-US`)
+    let json = await response.json()
+    let movies = json.results
+
     // Main loop
     for (let i=0; i<movies.length; i++) {
+      // Check for watched by this user
       let movie = movies[i]
       let docRef = await db.collection('watched').doc(`${user.uid}-${movie.id}`).get()
       let watchedMovie = docRef.data()
@@ -47,7 +53,7 @@ firebase.auth().onAuthStateChanged(async function(user) {
       }
 
       // Insert poster and button
-      document.querySelector('.movies').insertAdjacentHTML('beforeend', `
+      moviesElement.insertAdjacentHTML('beforeend', `
         <div class="w-1/5 p-4 movie-${movie.id} ${opacityClass}">
           <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" class="w-full">
           <a href="#" class="watched-button block text-center text-white bg-green-500 mt-4 px-4 py-2 rounded">I've watched this!</a>
@@ -68,7 +74,7 @@ firebase.auth().onAuthStateChanged(async function(user) {
         }
       })
 
-      // Make the cursor a pointer to show that the whole movie-${} div is clickable.
+      // Make the cursor a pointer to show that the whole movie-${} element is clickable.
       document.querySelector(`.movie-${movie.id}`).addEventListener('mouseover', async function(event) {
         event.preventDefault()
         let movieElement = document.querySelector(`.movie-${movie.id}`)
@@ -82,30 +88,30 @@ firebase.auth().onAuthStateChanged(async function(user) {
 
       // Add to the loading element as loops are completed
       if ((i > (movies.length / 4)) && loadedOneFourth == false) {
-        document.querySelector('.loading').insertAdjacentHTML('beforeend', '.')
+        loadingElement.insertAdjacentHTML('beforeend', '.')
         loadedOneFourth = true
       } else if ((i > ((2*movies.length) / 4)) && loadedTwoFourths == false) {
-        document.querySelector('.loading').insertAdjacentHTML('beforeend', '.')
+        loadingElement.insertAdjacentHTML('beforeend', '.')
         loadedTwoFourths = true
       } else if ((i > ((3*movies.length) / 4)) && loadedThreeFourths == false) {
-        document.querySelector('.loading').insertAdjacentHTML('beforeend', '.')
+        loadingElement.insertAdjacentHTML('beforeend', '.')
         loadedThreeFourths = true
       }
     }
 
-    // Un-hide movies element & shrink loading element after the main loop is complete
-    document.querySelector('.loading').innerHTML = ''
-    document.querySelector('.loading').classList.remove('pt-8')
-    document.querySelector('.movies').classList.remove('invisible')
-  } else {
-      let ui = new firebaseui.auth.AuthUI(firebase.auth())
-      let authUIConfig = {
-        signInOptions: [
-          firebase.auth.EmailAuthProvider.PROVIDER_ID
-        ],
-        signInSuccessUrl: 'movies.html'
-      }
-      ui.start('.sign-in-or-sign-out', authUIConfig)
+    // Un-hide movies element & clear loading element after the main loop is complete
+    loadingElement.innerHTML = ''
+    loadingElement.classList.remove('pt-8')
+    moviesElement.classList.remove('invisible')
+  } else { // No user logged in
+    let ui = new firebaseui.auth.AuthUI(firebase.auth())
+    let authUIConfig = {
+      signInOptions: [
+        firebase.auth.EmailAuthProvider.PROVIDER_ID
+      ],
+      signInSuccessUrl: 'movies.html'
+    }
+    ui.start('.sign-in-or-sign-out', authUIConfig)
   }
 })
 
