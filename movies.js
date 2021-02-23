@@ -15,7 +15,12 @@ firebase.auth().onAuthStateChanged(async function(user) {
 
     // Sign out button and event
     document.querySelector('.sign-in-or-sign-out').innerHTML = `
-      <button class="sign-out firebaseui-id-submit firebaseui-button mdl-button mdl-js-button mdl-button--raised mdl-button--colored">Sign Out</button>
+      <div class="text-lg font-sans text-center text-white block">
+        Signed in as ${user.displayName}.
+      </div>
+      <button class="sign-out firebaseui-id-submit firebaseui-button mdl-button mdl-js-button mdl-button--raised mdl-button--colored">
+        Sign Out
+      </button>
     `
     document.querySelector('.sign-out').addEventListener('click', function(event) {
       event.preventDefault()
@@ -74,7 +79,6 @@ firebase.auth().onAuthStateChanged(async function(user) {
         let movieElement = document.querySelector(`.movie-${movie.id}`)
         movieElement.classList.remove('cursor-pointer')
       })
-
 
       // Add to the loading element as loops are completed
       if ((i > (movies.length / 4)) && loadedOneFourth == false) {
