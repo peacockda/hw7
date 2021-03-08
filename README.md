@@ -2,7 +2,7 @@
 This is homework #7 for KIEI-451. Using a starting movie page and watched status tracker, the assignment is to 
 - Implement login flow, including account creation
 - Track user data in a database collection separate from authentication
-- Show user-specific and a logout button information when a user is logged in
+- Show user-specific information and a logout button when a user is logged in
 - Implement user-specific watchlists
 
 In addition to the required rubric, the following features are included for usability
